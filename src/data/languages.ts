@@ -1,0 +1,83 @@
+import type { Language } from '@/types'
+
+export const LANGUAGES: Language[] = [
+  {
+    id: 'python',
+    title: 'Python',
+    description: 'Python programming with web frameworks. Covers functions, file I/O, OOP, and Django -- aligned with SASTRA University syllabus.',
+    icon: 'Py',
+    difficulty: 'Beginner',
+    totalConcepts: 14,
+    color: '#3B82F6',
+    tags: ['OOP', 'Web', 'Django', 'File I/O'],
+    syllabusTag: 'SASTRA Syllabus',
+  },
+  {
+    id: 'javascript',
+    title: 'JavaScript',
+    description: 'The language of the web. Master variables, functions, arrays, DOM, events, async/await, and modern ES6+ features to build interactive websites.',
+    icon: 'JS',
+    difficulty: 'Beginner',
+    totalConcepts: 15,
+    color: '#F59E0B',
+    tags: ['DOM', 'ES6+', 'Async', 'Web'],
+  },
+  {
+    id: 'c',
+    title: 'C',
+    description: 'Problem solving and programming in C. Covers algorithms, data types, functions, pointers, and file handling -- aligned with SASTRA University syllabus.',
+    icon: 'C',
+    difficulty: 'Intermediate',
+    totalConcepts: 11,
+    color: '#6366F1',
+    tags: ['Systems', 'Pointers', 'Structures', 'Files'],
+    syllabusTag: 'SASTRA Syllabus',
+  },
+  {
+    id: 'cpp',
+    title: 'C++',
+    description: 'Object-oriented programming with C++. Covers classes, inheritance, templates, virtual functions, and file streams -- aligned with SASTRA University syllabus.',
+    icon: 'C++',
+    difficulty: 'Intermediate',
+    totalConcepts: 11,
+    color: '#8B5CF6',
+    tags: ['OOP', 'Templates', 'Inheritance', 'Streams'],
+    syllabusTag: 'SASTRA Syllabus',
+  },
+  {
+    id: 'java',
+    title: 'Java',
+    description: 'Java programming covering OOP, multithreading, collections, event handling, and Swing GUI -- aligned with SASTRA University syllabus.',
+    icon: 'Ja',
+    difficulty: 'Intermediate',
+    totalConcepts: 12,
+    color: '#EF4444',
+    tags: ['OOP', 'Threads', 'Collections', 'Swing'],
+    syllabusTag: 'SASTRA Syllabus',
+  },
+  {
+    id: 'html_css',
+    title: 'HTML & CSS',
+    description: 'The building blocks of the web. Learn HTML structure, CSS selectors, Flexbox, Grid, and responsive design from scratch.',
+    icon: 'HT',
+    difficulty: 'Beginner',
+    totalConcepts: 5,
+    color: '#EC4899',
+    tags: ['Web', 'Frontend', 'Flexbox', 'Responsive'],
+  },
+  {
+    id: 'data_analytics',
+    title: 'Data Analytics',
+    description: 'Master Python for data analysis. Learn NumPy, pandas, matplotlib, data cleaning, and statistical analysis.',
+    icon: 'DA',
+    difficulty: 'Intermediate',
+    totalConcepts: 5,
+    color: '#10B981',
+    tags: ['pandas', 'NumPy', 'matplotlib', 'Statistics'],
+    trending: true,
+  },
+]
+
+export function getLanguageById(id: string): Language | undefined {
+  return LANGUAGES.find((l) => l.id === id)
+}
