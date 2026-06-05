@@ -97,8 +97,16 @@ export function StudentNavbar() {
     router.replace('/')
   }
 
-  const isActive = (href: string) =>
-    href === '/dashboard' ? pathname === href : pathname === href || pathname.startsWith(href + '/')
+  const normalizePath = (path: string) => path.replace(/\/$/, '')
+  const normalizedPathname = normalizePath(pathname)
+
+  const isActive = (href: string) => {
+    const normalizedHref = normalizePath(href)
+    return (
+      normalizedPathname === normalizedHref ||
+      normalizedPathname.startsWith(normalizedHref + '/')
+    )
+  }
 
   return (
     <aside
