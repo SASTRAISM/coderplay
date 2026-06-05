@@ -11,30 +11,13 @@ const SERVICES = {
     name: 'frontend',
     port: 5175,
     command: process.execPath,
-    args: [path.join(ROOT, 'scripts', 'serve-dist.js')],
-    check: async () => {
-      try {
-        const healthResponse = await fetch('http://127.0.0.1:5175/__coderplay_health', {
-          signal: AbortSignal.timeout(1500),
-        })
-        if (healthResponse.ok) {
-          const data = await healthResponse.json()
-          if (data?.name === 'CoderPlay Frontend' && data?.mode === 'static') {
-            return true
-          }
-        }
-      } catch {}
-
-      try {
-        const rootResponse = await fetch('http://127.0.0.1:5175/', {
-          signal: AbortSignal.timeout(1500),
-        })
-        if (!rootResponse.ok) return false
-        const html = await rootResponse.text()
-        return html.includes('<title>CoderPlay AI')
-      } catch {
-        return false
-      }
+    staticArgs: [path.join(ROOT, 'scripts', 'serve-dist.js')],
+    devArgs: [path.join(ROOT, 'node_modules', 'next', 'dist', 'bin', 'next'), 'dev', '-p', '5175', '-H', '0.0.0.0'],
+    healthUrl: 'http://127.0.0.1:5175/',
+    isHealthy: async (response) => {
+      if (!response.ok) return false
+      const html = await response.text()
+      return html.includes('<title>CoderPlay AI')
     },
   },
   backend: {
@@ -87,9 +70,9 @@ function isPortOpen(port) {
   })
 }
 
-async function hasExpectedService(config) {
+async function hasExpectedService(config, mode) {
   if (typeof config.check === 'function') {
-    return config.check()
+    return config.check(mode)
   }
 
   try {
@@ -100,7 +83,7 @@ async function hasExpectedService(config) {
   }
 }
 
-function idleWithExistingService(config) {
+function idleWithExistingService(config, mode) {
   console.log(`Reusing existing ${config.name} on port ${config.port}`)
 
   const interval = setInterval(async () => {
@@ -108,11 +91,11 @@ function idleWithExistingService(config) {
     if (!portInUse) {
       console.log(`${config.name} on port ${config.port} stopped; starting it now...`)
       clearInterval(interval)
-      spawnService(config)
+      spawnService(config, mode)
       return
     }
 
-    const healthy = await hasExpectedService(config)
+    const healthy = await hasExpectedService(config, mode)
     if (!healthy) {
       console.error(`${config.name} on port ${config.port} is no longer healthy.`)
       process.exit(1)
@@ -125,8 +108,9 @@ function idleWithExistingService(config) {
   process.on('SIGTERM', stop)
 }
 
-function spawnService(config) {
-  const child = spawn(config.command, config.args, {
+function spawnService(config, mode) {
+  const args = mode === 'dev' && typeof config.devArgs !== 'undefined' ? config.devArgs : config.staticArgs || config.args
+  const child = spawn(config.command, args, {
     cwd: config.cwd || ROOT,
     env: config.env || process.env,
     stdio: 'inherit',
@@ -155,6 +139,7 @@ function spawnService(config) {
 
 async function main() {
   const serviceKey = process.argv[2]
+  const mode = process.argv[3] === 'dev' ? 'dev' : 'static'
   const config = SERVICES[serviceKey]
 
   if (!config) {
@@ -164,17 +149,17 @@ async function main() {
 
   const portInUse = await isPortOpen(config.port)
   if (!portInUse) {
-    spawnService(config)
+    spawnService(config, mode)
     return
   }
 
-  const healthy = await hasExpectedService(config)
+  const healthy = await hasExpectedService(config, mode)
   if (!healthy) {
     console.error(`Port ${config.port} is already in use by another process.`)
     process.exit(1)
   }
 
-  idleWithExistingService(config)
+  idleWithExistingService(config, mode)
 }
 
 main()
