@@ -72,10 +72,10 @@ export function LanguageCard({
       </div>
 
       {/* Progress */}
-      <div className="mb-4 space-y-1">
+      <div className="flex-col mb-4 space-y-1">
         <div className="flex justify-between text-xs text-gray-400">
           <span>{completedConcepts}/{language.totalConcepts} concepts</span>
-          <span>{isStarted ? 'In Progress' : 'Not started'}</span>
+          <span>{isStarted ? `${progressPercent}%` : 'Not started'}</span>
         </div>
         <ProgressBar value={progressPercent} size="sm" animate={false} />
       </div>
@@ -84,7 +84,7 @@ export function LanguageCard({
       <Link
         href={`/language/${language.id}`}
         className="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border-2 transition-all
-          border-gray-200 text-gray-700 hover:border-yellow-500 hover:bg-yellow-500 hover:text-black"
+          border-gray-200 text-gray-700 hover:border-yellow-500 hover:bg-yellow-500 hover:!text-black"
       >
         {isStarted ? 'Continue Learning' : 'Start Learning'}
       </Link>
