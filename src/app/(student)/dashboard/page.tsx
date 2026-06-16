@@ -243,7 +243,7 @@ export default function DashboardPage() {
                 <motion.div
                   whileHover={{ y: -3, boxShadow: '0 12px 40px rgba(0,0,0,0.10)' }}
                   transition={{ duration: 0.2 }}
-                  className="group bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 hover:border-indigo-300 transition-colors cursor-pointer h-full flex flex-col"
+                  className="group bg-gradient-to-br from-indigo-50 to-purple-50 dark:bg-gray-100 border border-indigo-100/30 rounded-2xl p-6 hover:border-indigo-300 transition-colors cursor-pointer h-full flex flex-col"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                       />
                     </div>
                   </div>
-                  <div className="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border-2 border-indigo-200 text-indigo-700 group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                  <div className="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border-2 border-indigo-200 text-white group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all">
                     {aptitudePct > 0 ? 'Continue Aptitude Prep ->' : 'Start Aptitude Prep ->'}
                   </div>
                 </motion.div>
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                 <motion.div
                   whileHover={{ y: -3, boxShadow: '0 12px 40px rgba(0,0,0,0.10)' }}
                   transition={{ duration: 0.2 }}
-                  className="group bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl p-6 hover:border-green-300 transition-colors cursor-pointer h-full flex flex-col"
+                  className="group bg-gradient-to-br from-green-50 to-emerald-50 dark:bg-gray-100 border border-green-100 rounded-2xl p-6 hover:border-green-300 transition-colors cursor-pointer h-full flex flex-col"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                       <span key={tag} className="text-xs text-gray-400 bg-white px-2 py-0.5 rounded-md border border-gray-100">{tag}</span>
                     ))}
                   </div>
-                  <div className="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border-2 border-green-200 text-green-700 group-hover:border-green-500 group-hover:bg-green-500 group-hover:text-white transition-all">
+                  <div className="block w-full text-center text-sm font-semibold py-2.5 rounded-xl border-2 border-green-200 text-white group-hover:border-green-500 group-hover:bg-green-500 group-hover:text-white transition-all">
                     View Placement Tests {'>'}
                   </div>
                 </motion.div>

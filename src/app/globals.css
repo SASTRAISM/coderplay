@@ -178,3 +178,210 @@ pre {
   color: inherit;
   padding: 0;
 }
+
+/* --- Dark Mode Global Overrides ------------------------------------------ */
+/* Applied via .dark class on <html>. These cascade globally so leaf
+   components (Badge, Skeleton, cards) do not need individual dark: patches. */
+
+.dark body {
+  background-color: #0A0A0A;
+  color: #F9FAFB;
+}
+
+/* Surface / card backgrounds */
+.dark .bg-white { background-color: #111111 !important; }
+.dark .bg-gray-50 { background-color: #0A0A0A !important; }
+.dark .bg-gray-100 { background-color: #1A1A1A !important; }
+.dark .bg-gray-200 { background-color: #262626 !important; }
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover { background-color: #1A1A1A !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #262626 !important; }
+.dark .hover\:bg-gray-200:hover { background-color: #333333 !important; }
+
+/* Text colors */
+.dark .text-gray-900 { color: #F9FAFB !important; }
+.dark .text-gray-800 { color: #F3F4F6 !important; }
+.dark .text-gray-700 { color: #D1D5DB !important; }
+.dark .text-gray-600 { color: #9CA3AF !important; }
+.dark .text-gray-500 { color: #6B7280 !important; }
+.dark .text-gray-400 { color: #6B7280 !important; }
+
+/* Borders */
+.dark .border-gray-100 { border-color: #1F2937 !important; }
+.dark .border-gray-200 { border-color: #374151 !important; }
+.dark .border-gray-300 { border-color: #4B5563 !important; }
+
+/* Divide lines */
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1F2937 !important; }
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #374151 !important; }
+
+/* Yellow tint backgrounds (active states) */
+.dark .bg-yellow-50 { background-color: rgba(234,179,8,0.08) !important; }
+.dark .border-yellow-200 { border-color: rgba(234,179,8,0.25) !important; }
+.dark .text-yellow-700 { color: #EAB308 !important; }
+.dark .text-yellow-600 { color: #EAB308 !important; }
+
+/* Emerald tint (stats widgets) */
+.dark .bg-emerald-50 { background-color: rgba(16,185,129,0.08) !important; }
+.dark .border-emerald-100 { border-color: rgba(16,185,129,0.15) !important; }
+.dark .text-emerald-700 { color: #34D399 !important; }
+
+/* Red hover (logout) */
+.dark .hover\:bg-red-50:hover { background-color: rgba(239,68,68,0.08) !important; }
+
+/* Skeleton shimmer */
+.dark .skeleton {
+  background: linear-gradient(90deg, #1F2937 25%, #374151 50%, #1F2937 75%);
+  background-size: 200% 100%;
+}
+
+/* Pre / code blocks */
+.dark pre { background: #111111; }
+.dark .ai-content code {
+  background: #374151;
+  color: #F9FAFB;
+}
+
+/* Scrollbars */
+.dark ::-webkit-scrollbar-track { background: #1F2937; }
+.dark ::-webkit-scrollbar-thumb { background: #4B5563; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #EAB308; }
+
+/* Input / textarea */
+.dark input, .dark textarea, .dark select {
+  background-color: #1A1A1A;
+  color: #F9FAFB;
+  border-color: #374151;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #6B7280; }
+
+/* ── Extended dark mode palette ──────────────────────────────────────────── */
+
+/* Gray-950 (near-black text used on intentionally light buttons) */
+.dark .text-gray-950 { color: #F9FAFB !important; }
+
+/* Gray-300 (silver avatar ring, misc borders) */
+.dark .bg-gray-300 { background-color: #374151 !important; }
+.dark .text-gray-300 { color: #9CA3AF !important; }
+.dark .border-gray-300 { border-color: #4B5563 !important; }
+.dark .text-gray-200 { color: #D1D5DB !important; }
+
+/* Yellow extended (decorative blurs, badges, "Up Next" chip) */
+.dark .bg-yellow-100 { background-color: rgba(234,179,8,0.06) !important; }
+.dark .bg-yellow-200 { background-color: rgba(234,179,8,0.12) !important; }
+.dark .border-yellow-100 { border-color: rgba(234,179,8,0.15) !important; }
+.dark .border-yellow-300 { border-color: rgba(234,179,8,0.40) !important; }
+.dark .text-yellow-800 { color: #EAB308 !important; }
+.dark .hover\:bg-yellow-50:hover { background-color: rgba(234,179,8,0.08) !important; }
+
+/* Green (success, completed, Beginner badge) */
+.dark .bg-green-50  { background-color: rgba(16,185,129,0.08) !important; }
+.dark .bg-green-100 { background-color: rgba(16,185,129,0.12) !important; }
+.dark .border-green-100 { border-color: rgba(16,185,129,0.15) !important; }
+.dark .border-green-200 { border-color: rgba(16,185,129,0.30) !important; }
+.dark .border-green-300 { border-color: rgba(16,185,129,0.45) !important; }
+.dark .text-green-800 { color: #34D399 !important; }
+.dark .text-green-700 { color: #34D399 !important; }
+.dark .text-green-600 { color: #34D399 !important; }
+.dark .hover\:bg-green-50:hover { background-color: rgba(16,185,129,0.08) !important; }
+
+/* Blue (concept-start activity, stage-2 header) */
+.dark .bg-blue-50  { background-color: rgba(59,130,246,0.08) !important; }
+.dark .border-blue-100 { border-color: rgba(59,130,246,0.15) !important; }
+.dark .border-blue-200 { border-color: rgba(59,130,246,0.30) !important; }
+.dark .text-blue-800 { color: #93C5FD !important; }
+.dark .text-blue-700 { color: #60A5FA !important; }
+.dark .text-blue-600 { color: #60A5FA !important; }
+.dark .text-blue-500 { color: #60A5FA !important; }
+
+/* Purple (stage-3 header, study hours) */
+.dark .bg-purple-50  { background-color: rgba(139,92,246,0.08) !important; }
+.dark .border-purple-100 { border-color: rgba(139,92,246,0.15) !important; }
+.dark .border-purple-200 { border-color: rgba(139,92,246,0.30) !important; }
+.dark .text-purple-700 { color: #A78BFA !important; }
+.dark .text-purple-600 { color: #A78BFA !important; }
+
+/* Orange (Intermediate badge, avg-XP card, internal score) */
+.dark .bg-orange-50  { background-color: rgba(249,115,22,0.08) !important; }
+.dark .border-orange-100 { border-color: rgba(249,115,22,0.15) !important; }
+.dark .border-orange-200 { border-color: rgba(249,115,22,0.30) !important; }
+.dark .border-orange-300 { border-color: rgba(249,115,22,0.45) !important; }
+.dark .text-orange-700 { color: #FB923C !important; }
+.dark .text-orange-600 { color: #FB923C !important; }
+.dark .text-orange-500 { color: #FB923C !important; }
+.dark .hover\:bg-orange-50:hover { background-color: rgba(249,115,22,0.08) !important; }
+
+/* Red (Advanced badge, error states) */
+.dark .bg-red-50  { background-color: rgba(239,68,68,0.08) !important; }
+.dark .border-red-100 { border-color: rgba(239,68,68,0.15) !important; }
+.dark .border-red-200 { border-color: rgba(239,68,68,0.30) !important; }
+.dark .border-red-300 { border-color: rgba(239,68,68,0.45) !important; }
+.dark .text-red-800 { color: #FCA5A5 !important; }
+.dark .text-red-700 { color: #F87171 !important; }
+.dark .text-red-600 { color: #F87171 !important; }
+.dark .text-red-500 { color: #F87171 !important; }
+
+/* Indigo (final exam, locked) */
+.dark .bg-indigo-50  { background-color: rgba(99,102,241,0.08) !important; }
+.dark .border-indigo-200 { border-color: rgba(99,102,241,0.30) !important; }
+.dark .border-indigo-400 { border-color: rgba(99,102,241,0.60) !important; }
+.dark .text-indigo-700 { color: #818CF8 !important; }
+.dark .text-indigo-600 { color: #818CF8 !important; }
+
+/* Hover: fix light-bg hover turning dark text invisible */
+.dark .hover\:bg-yellow-50:hover { background-color: rgba(234,179,8,0.08) !important; }
+.dark .hover\:text-gray-900:hover { color: #F9FAFB !important; }
+.dark .hover\:text-gray-700:hover { color: #D1D5DB !important; }
+.dark .hover\:border-gray-900:hover { border-color: #6B7280 !important; }
+
+/* Divide lines (leaderboard/list separators) */
+.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) { border-color: #1F2937 !important; }
+
+/* bg-gray-50/50 opacity variant (landing page sections) */
+.dark .bg-gray-50\/50 { background-color: #0A0A0A !important; }
+
+/* Colored shadows — strip the tint in dark mode */
+.dark .shadow-green-100,
+.dark .shadow-yellow-100,
+.dark .shadow-yellow-200,
+.dark .shadow-yellow-300 {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+}
+
+/* Amber (streak restore banner) */
+.dark .bg-amber-50  { background-color: rgba(245,158,11,0.08) !important; }
+.dark .border-amber-200 { border-color: rgba(245,158,11,0.25) !important; }
+.dark .text-amber-900 { color: #FCD34D !important; }
+.dark .text-amber-800 { color: #FCD34D !important; }
+.dark .text-red-600   { color: #F87171 !important; }
+
+/* bg-indigo-100 (Final Exam icon bg, Aptitude progress bar track) */
+.dark .bg-indigo-100 { background-color: rgba(99,102,241,0.15) !important; }
+
+/* bg-orange-100 (Review badge in stage-complete summary) */
+.dark .bg-orange-100 { background-color: rgba(249,115,22,0.15) !important; }
+
+/* bg-green-200 (needed for some completion states) */
+.dark .bg-green-200 { background-color: rgba(16,185,129,0.20) !important; }
+
+/* border-slate-200 (Logo onLight box border shows in dark mode) */
+.dark .border-slate-200 { border-color: #374151 !important; }
+
+/* Tailwind dark: variant classes generate different class names (dark\:bg-*)
+   that do NOT match our .dark .bg-* selectors — override them explicitly. */
+.dark .dark\:bg-gray-100 { background-color: #1A1A1A !important; }
+.dark .dark\:bg-gray-800 { background-color: #262626 !important; }
+
+/* Tailwind gradient stops — from-to-* classes set CSS vars, not bg-color,
+   so they need their own overrides. Used by Aptitude & Placement Test cards. */
+.dark .from-indigo-50 {
+  --tw-gradient-from: rgba(99,102,241,0.07) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(99,102,241,0)) !important;
+}
+.dark .to-purple-50 { --tw-gradient-to: rgba(139,92,246,0.07) !important; }
+.dark .from-green-50 {
+  --tw-gradient-from: rgba(16,185,129,0.06) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(16,185,129,0)) !important;
+}
+.dark .to-emerald-50 { --tw-gradient-to: rgba(16,185,129,0.06) !important; }

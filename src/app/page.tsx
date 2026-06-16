@@ -200,7 +200,7 @@ export default function LandingPage() {
       </section>
 
       {/* -- Languages ------------------------------------------------------- */}
-      <section id="languages" className="py-20 bg-gray-50/50">
+      <section id="languages" className="py-20 bg-gray-50/50 dark:bg-[#0A0A0A]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="text-xs font-bold text-yellow-600 uppercase tracking-widest">Supported Languages</span>

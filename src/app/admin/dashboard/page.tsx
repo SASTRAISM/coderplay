@@ -10,6 +10,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
 } from 'recharts'
+import { useTheme } from '@/context/ThemeContext'
 
 // -- Types ----------------------------------------------------------------------
 interface RawUser {
@@ -117,6 +118,17 @@ function downloadCSV(
 
 // -- Main Component -------------------------------------------------------------
 export default function AdminDashboardPage() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+  const tooltipStyle = {
+    background: isDark ? '#1F2937' : '#ffffff',
+    border: `1px solid ${isDark ? '#374151' : '#E5E7EB'}`,
+    borderRadius: 12,
+    fontSize: 12,
+    color: isDark ? '#F9FAFB' : '#111827',
+  }
+  const gridColor = isDark ? '#374151' : '#F3F4F6'
+
   const usersRef = useRef<Record<string, RawUser>>({})
   const progressRef = useRef<Record<string, RawProgress>>({})
 
@@ -296,10 +308,10 @@ export default function AdminDashboardPage() {
                   <stop offset="95%" stopColor="#EAB308" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9CA3AF' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v as number} min`, 'Activity']} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v as number} min`, 'Activity']} />
               <Area type="monotone" dataKey="minutes" stroke="#EAB308" strokeWidth={2.5} fill="url(#actGrad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
@@ -316,7 +328,7 @@ export default function AdminDashboardPage() {
                   <Pie data={branchData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">
                     {branchData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 12 }} />
+                  <Tooltip contentStyle={tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-1.5 mt-2">
@@ -345,10 +357,10 @@ export default function AdminDashboardPage() {
         <p className="text-xs text-gray-400 mb-4">Distinct users seen per day (based on lastSeen) -- last 14 days</p>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={loginsByDay} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
             <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9CA3AF' }} tickLine={false} axisLine={false} />
             <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} tickLine={false} axisLine={false} />
-            <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v as number} users`, 'Logins']} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v as number} users`, 'Logins']} />
             <Bar dataKey="logins" fill="#3B82F6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

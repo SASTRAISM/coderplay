@@ -8,6 +8,7 @@ import { LayoutDashboard, BarChart2, Trophy, Zap, Timer, LogOut, User, ChevronLe
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Logo } from '@/components/shared/Logo'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { addTimeSpent, listenToProgress, updateStreak, updateUserProfile } from '@/lib/firebase/firestore'
 import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config'
@@ -111,17 +112,30 @@ export function StudentNavbar() {
   return (
     <aside
       className={cn(
-        'shrink-0 h-full flex flex-col bg-white border-r border-gray-100 transition-all duration-300 z-40 relative',
-        collapsed ? 'w-16' : 'w-56'
+        'shrink-0 h-full flex flex-col bg-white dark:bg-[#111111] border-r border-gray-100 dark:border-gray-800 transition-all duration-300 z-40 relative',
+        collapsed ? 'w-16' : 'w-60'
       )}
     >
       {/* Logo + collapse toggle */}
-      <div className={cn('flex items-center border-b border-gray-100 shrink-0', collapsed ? 'justify-center px-0 py-4' : 'justify-between px-4 py-4')}>
-        {!collapsed && <Logo variant="nav" href="/dashboard" onLight />}
+      <div className={cn(
+        'flex items-center border-b border-gray-100 dark:border-gray-800 shrink-0',
+        collapsed ? 'justify-center px-0 py-4' : 'px-4 py-4'
+      )}>
+        {!collapsed && (
+          <Link
+            href="/dashboard"
+            className="min-w-0 flex-1 flex items-center gap-2 hover:opacity-90 transition-opacity overflow-hidden"
+          >
+            <Logo variant="sidebar" />
+            <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate whitespace-nowrap">
+              CoderPlay <span className="text-yellow-500">AI</span>
+            </span>
+          </Link>
+        )}
         <button
           type="button"
           onClick={toggleCollapsed}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -141,8 +155,8 @@ export function StudentNavbar() {
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all',
                 collapsed ? 'justify-center' : '',
                 active
-                  ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/30'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800'
               )}
             >
               <link.Icon className="w-4 h-4 shrink-0" />
@@ -152,21 +166,27 @@ export function StudentNavbar() {
         })}
       </nav>
 
-      {/* Bottom: stats + user + logout */}
-      <div className="shrink-0 border-t border-gray-100 p-3 space-y-2">
+      {/* Bottom: stats + theme toggle + user + logout */}
+      <div className="shrink-0 border-t border-gray-100 dark:border-gray-800 p-3 space-y-2">
         {/* XP + Time stats (only when expanded) */}
         {!collapsed && (
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-100 dark:border-yellow-500/20 rounded-lg px-3 py-1.5">
               <Zap className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-              <span className="text-xs font-bold text-yellow-700">{xp.toLocaleString()} XP</span>
+              <span className="text-xs font-bold text-yellow-700 dark:text-yellow-400">{xp.toLocaleString()} XP</span>
             </div>
-            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-lg px-3 py-1.5">
               <Timer className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span className="text-xs font-bold text-emerald-700">Today {todayMinutes}m</span>
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Today {todayMinutes}m</span>
             </div>
           </div>
         )}
+
+        {/* Theme toggle */}
+        <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-1')}>
+          {!collapsed && <span className="text-xs text-gray-400 dark:text-gray-500">Theme</span>}
+          <ThemeToggle />
+        </div>
 
         {/* Avatar row */}
         <div className={cn('flex items-center gap-2', collapsed ? 'justify-center' : '')}>
@@ -175,8 +195,8 @@ export function StudentNavbar() {
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-gray-900 truncate">{displayName}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+              <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">{displayName}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user?.email}</p>
             </div>
           )}
         </div>
@@ -187,7 +207,7 @@ export function StudentNavbar() {
           onClick={handleLogout}
           title={collapsed ? 'Sign out' : undefined}
           className={cn(
-            'w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors',
+            'w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors',
             collapsed ? 'justify-center' : ''
           )}
         >

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/components/auth/AuthProvider'
+import { ThemeProvider } from '@/context/ThemeContext'
 
 export const metadata: Metadata = {
   title: {
@@ -26,8 +27,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Anti-FOUC: apply saved theme before first paint */}
         <script dangerouslySetInnerHTML={{ __html: `
-          // Unregister stale service workers and clear old caches on every load
+          try {
+            var t = localStorage.getItem('cp_theme');
+            if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            if (t === 'dark') document.documentElement.classList.add('dark');
+          } catch(e) {}
+        `}} />
+        <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
           }
@@ -36,8 +44,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }
         `}} />
       </head>
-      <body className="min-h-screen bg-white text-gray-900 antialiased">
-        <AuthProvider>{children}</AuthProvider>
+      <body className="min-h-screen bg-white dark:bg-[#0A0A0A] text-gray-900 dark:text-gray-50 antialiased">
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
