@@ -17,6 +17,8 @@ import { db } from '@/lib/firebase/config'
 import { getBackendUrl } from '@/lib/backendUrl'
 import { CONCEPTS } from '@/data/concepts'
 import { LANGUAGES } from '@/data/languages'
+import { getCertificateTier } from '@/lib/pdf/downloadCertificatePdf'
+import { LOGO_BASE64 } from '@/lib/pdf/adminAssets'
 import { APTITUDE_SUBJECTS } from '@/data/aptitudeData'
 import {
   BarChart,
@@ -279,108 +281,327 @@ function downloadCSV(students: StudentData[], dateFilter?: string) {
 }
 
 // PDF individual report
-async function downloadPDF(s: StudentData, mockTests: MockTestResult[], placements: PlacementTestResult[]) {
+const TIER_PDF_COLORS: Record<string, { bg: [number, number, number]; text: [number, number, number] }> = {
+  Diamond: { bg: [207, 250, 254], text: [21, 94, 117] },
+  Gold:    { bg: [254, 249, 195], text: [133, 77, 14] },
+  Silver:  { bg: [243, 244, 246], text: [55, 65, 81] },
+  Pass:    { bg: [254, 243, 199], text: [146, 64, 14] },
+  Failed:  { bg: [254, 226, 226], text: [185, 28, 28] },
+}
+
+async function downloadPDF(
+  s: StudentData,
+  completedStages: Record<string, number[]>,
+  mockTests: MockTestResult[],
+  placements: PlacementTestResult[],
+  finalExams: FinalExamResult[],
+  aptBySubject: { title: string; avg: number; count: number }[],
+  weekData: { day: string; minutes: number }[],
+) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const W = 210
+  const H = 297
+  const MARGIN = 15
   let y = 20
 
-  const addLine = (text: string, x = 20, size = 10, bold = false, color: [number, number, number] = [30, 30, 30]) => {
-    doc.setFontSize(size)
-    doc.setFont('helvetica', bold ? 'bold' : 'normal')
-    doc.setTextColor(...color)
-    doc.text(text, x, y)
-    y += size * 0.5 + 3
+  const NAVY: [number, number, number] = [17, 24, 39]     // gray-900
+  const MUTED: [number, number, number] = [107, 114, 128]  // gray-500
+  const INK: [number, number, number] = [31, 41, 55]       // gray-800
+  const YELLOW: [number, number, number] = [234, 179, 8]   // yellow-500
+  const LINE: [number, number, number] = [229, 231, 235]   // gray-200
+  const PANEL: [number, number, number] = [249, 250, 251]  // gray-50
+
+  const ensureSpace = (needed: number) => {
+    if (y + needed > H - 18) {
+      doc.addPage()
+      y = 20
+    }
   }
 
-  const addSection = (title: string) => {
-    y += 4
-    doc.setFillColor(250, 220, 50)
-    doc.roundedRect(15, y - 5, W - 30, 9, 2, 2, 'F')
-    addLine(title, 18, 11, true, [30, 30, 30])
-    y += 1
-  }
-
-  const addKV = (label: string, value: string, x = 20, xv = 80) => {
-    doc.setFontSize(9)
+  const sectionTitle = (title: string) => {
+    ensureSpace(14)
+    doc.setFillColor(...YELLOW)
+    doc.roundedRect(MARGIN, y - 4.5, 3, 6, 1, 1, 'F')
+    doc.setFontSize(11.5)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(100, 100, 100)
-    doc.text(label, x, y)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(30, 30, 30)
-    doc.text(value, xv, y)
-    y += 6
+    doc.setTextColor(...NAVY)
+    doc.text(title, MARGIN + 6, y)
+    y += 8
   }
 
-  // Header
-  doc.setFillColor(30, 30, 30)
-  doc.rect(0, 0, W, 36, 'F')
-  doc.setFontSize(18)
+  const kv = (label: string, value: string, x: number, xv: number) => {
+    doc.setFontSize(8.5)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...MUTED)
+    doc.text(label, x, y)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...INK)
+    doc.text(value, xv, y)
+  }
+
+  // -- Header band with logo ---------------------------------------------------
+  doc.setFillColor(...NAVY)
+  doc.rect(0, 0, W, 34, 'F')
+  doc.setFillColor(...YELLOW)
+  doc.rect(0, 34, W, 1.2, 'F')
+
+  const logoW = 26
+  const logoH = logoW * (206 / 400)
+  doc.addImage(LOGO_BASE64, 'PNG', MARGIN, 9, logoW, logoH, undefined, 'FAST')
+
+  doc.setFontSize(15)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(255, 255, 255)
-  doc.text('CoderPlay AI -- Student Report', 20, 16)
-  doc.setFontSize(10)
+  doc.text('Student Performance Report', MARGIN + logoW + 6, 16)
+  doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(200, 200, 200)
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, 20, 26)
-  y = 48
+  doc.setTextColor(209, 213, 219)
+  doc.text('CoderPlay AI', MARGIN + logoW + 6, 22.5)
 
-  addSection('Student Information')
-  addKV('Name:', s.name)
-  addKV('Email:', s.email)
-  addKV('Reg No.:', s.regNum)
-  addKV('Branch:', s.branch)
-  addKV('Year:', s.year)
-  addKV('Level:', `${s.level}`)
-  addKV('XP:', s.xp.toLocaleString())
+  doc.setFontSize(8.5)
+  doc.setTextColor(209, 213, 219)
+  doc.text(
+    `Generated ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+    W - MARGIN,
+    16,
+    { align: 'right' },
+  )
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(10)
+  doc.text(s.regNum, W - MARGIN, 22.5, { align: 'right' })
 
-  addSection('Learning Stats')
-  addKV('Study Time:', fmtTime(s.totalMinutes))
-  addKV('Concepts Done:', `${s.conceptsDone} / ${s.totalConcepts}`)
-  addKV('Completion:', `${s.completionPct}%`)
-  addKV('Avg Assessment:', `${s.assessmentAvg}%`)
+  y = 46
 
-  addSection('Language Progress')
+  // -- Student identity card ----------------------------------------------------
+  const cardTop = y - 6
+  const cardHeight = 44
+  doc.setFillColor(...PANEL)
+  doc.roundedRect(MARGIN, cardTop, W - MARGIN * 2, cardHeight, 2, 2, 'F')
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...NAVY)
+  doc.text(s.name, MARGIN + 5, cardTop + 8)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...MUTED)
+  doc.text(s.email, MARGIN + 5, cardTop + 14)
+
+  // Label-above-value stat block -- avoids collisions regardless of value length
+  const statBlock = (label: string, value: string, x: number, labelY: number, valueY: number) => {
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...MUTED)
+    doc.text(label, x, labelY)
+    doc.setFontSize(9.5)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...INK)
+    doc.text(value, x, valueY)
+  }
+
+  // Branch gets its own full-width row since department names can run long
+  statBlock('BRANCH', s.branch, MARGIN + 5, cardTop + 23, cardTop + 27.5)
+  // Year / Level / XP are short, so they share a row
+  statBlock('YEAR', `${s.year}`, MARGIN + 5, cardTop + 33.5, cardTop + 38)
+  statBlock('LEVEL', `${s.level}`, MARGIN + 65, cardTop + 33.5, cardTop + 38)
+  statBlock('XP', s.xp.toLocaleString(), MARGIN + 125, cardTop + 33.5, cardTop + 38)
+
+  y = cardTop + cardHeight + 8
+
+  // -- Key stat tiles -------------------------------------------------------------
+  const tileGap = 4
+  const tileW = (W - MARGIN * 2 - tileGap * 3) / 4
+  const tiles: { label: string; value: string }[] = [
+    { label: 'Study Time', value: fmtTime(s.totalMinutes) },
+    { label: 'Concepts Done', value: `${s.conceptsDone}/${s.totalConcepts}` },
+    { label: 'Completion', value: `${s.completionPct}%` },
+    { label: 'Avg Assessment', value: `${s.assessmentAvg}%` },
+  ]
+  tiles.forEach((t, i) => {
+    const x = MARGIN + i * (tileW + tileGap)
+    doc.setFillColor(...PANEL)
+    doc.setDrawColor(...LINE)
+    doc.roundedRect(x, y, tileW, 18, 2, 2, 'FD')
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...NAVY)
+    doc.text(t.value, x + tileW / 2, y + 8, { align: 'center' })
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...MUTED)
+    doc.text(t.label, x + tileW / 2, y + 14, { align: 'center' })
+  })
+  y += 26
+
+  // -- Weekly activity mini bar chart --------------------------------------------
+  if (weekData.length > 0) {
+    sectionTitle('Weekly Activity (last 7 days)')
+    const chartH = 22
+    const maxMinutes = Math.max(1, ...weekData.map(d => d.minutes))
+    const barGap = 3
+    const barW = (W - MARGIN * 2 - barGap * (weekData.length - 1)) / weekData.length
+    doc.setDrawColor(...LINE)
+    doc.roundedRect(MARGIN, y, W - MARGIN * 2, chartH + 10, 2, 2, 'D')
+    weekData.forEach((d, i) => {
+      const x = MARGIN + i * (barW + barGap)
+      const h = Math.max(1, (d.minutes / maxMinutes) * chartH)
+      doc.setFillColor(...YELLOW)
+      doc.roundedRect(x + barW * 0.15, y + 4 + (chartH - h), barW * 0.7, h, 1, 1, 'F')
+      doc.setFontSize(6.5)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...MUTED)
+      doc.text(d.day, x + barW / 2, y + chartH + 8, { align: 'center' })
+      doc.setFontSize(6)
+      doc.setTextColor(...INK)
+      doc.text(`${d.minutes}m`, x + barW / 2, y + 4 + (chartH - h) - 1.5, { align: 'center' })
+    })
+    y += chartH + 18
+  }
+
+  // -- Language progress ----------------------------------------------------------
+  sectionTitle('Language Progress')
   LANGUAGES.forEach(lang => {
+    ensureSpace(9)
     const concepts = CONCEPTS[lang.id] || []
     const done = concepts.filter(c => {
-      const st = s.completedStages?.[c.id] || []
+      const st = completedStages?.[c.id] || []
       return st.includes(1) && st.includes(2) && st.includes(3)
     }).length
     const pct = concepts.length > 0 ? Math.round((done / concepts.length) * 100) : 0
     doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...INK)
+    doc.text(lang.title, MARGIN, y)
     doc.setFont('helvetica', 'normal')
-    doc.setTextColor(60, 60, 60)
-    doc.text(`${lang.title}:`, 20, y)
-    doc.text(`${done}/${concepts.length} (${pct}%)`, 80, y)
-    // Bar
-    doc.setFillColor(230, 230, 230)
-    doc.roundedRect(110, y - 4, 60, 4, 1, 1, 'F')
-    if (pct > 0) {
-      doc.setFillColor(234, 179, 8)
-      doc.roundedRect(110, y - 4, 60 * pct / 100, 4, 1, 1, 'F')
-    }
-    y += 7
-    if (y > 270) { doc.addPage(); y = 20 }
-  })
+    doc.setTextColor(...MUTED)
+    doc.text(`${done}/${concepts.length} concepts`, MARGIN + 45, y)
+    doc.setTextColor(...INK)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${pct}%`, W - MARGIN, y, { align: 'right' })
 
+    doc.setFillColor(...LINE)
+    doc.roundedRect(MARGIN, y + 2, W - MARGIN * 2 - 12, 3, 1.5, 1.5, 'F')
+    if (pct > 0) {
+      doc.setFillColor(...YELLOW)
+      doc.roundedRect(MARGIN, y + 2, (W - MARGIN * 2 - 12) * pct / 100, 3, 1.5, 1.5, 'F')
+    }
+    y += 9
+  })
+  y += 3
+
+  // -- Final exam results (certificate tiers) --------------------------------------
+  if (finalExams.length > 0) {
+    ensureSpace(14)
+    sectionTitle('Final Exam Results')
+    finalExams.forEach(exam => {
+      ensureSpace(12)
+      const lang = LANGUAGES.find(l => l.id === exam.languageId)?.title || exam.languageId
+      const tier = getCertificateTier(exam.combinedScore ?? 0)
+      const tc = TIER_PDF_COLORS[tier] ?? TIER_PDF_COLORS.Failed
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(...INK)
+      doc.text(lang, MARGIN, y)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...MUTED)
+      doc.text(
+        `Internal ${exam.internalMarks ?? 0}/25  .  External ${exam.externalMarks ?? 0}/75  .  Combined ${exam.combinedScore ?? 0}/100`,
+        MARGIN,
+        y + 5,
+      )
+
+      const chipLabel = tier === 'Failed' ? 'FAILED' : `${tier.toUpperCase()} TIER`
+      doc.setFontSize(7.5)
+      doc.setFont('helvetica', 'bold')
+      const chipW = doc.getTextWidth(chipLabel) + 8
+      const chipX = W - MARGIN - chipW
+      doc.setFillColor(...tc.bg)
+      doc.roundedRect(chipX, y - 4.5, chipW, 6.5, 2, 2, 'F')
+      doc.setTextColor(...tc.text)
+      doc.text(chipLabel, chipX + chipW / 2, y, { align: 'center' })
+
+      doc.setFontSize(7.5)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...MUTED)
+      doc.text(fmtDate(exam.submittedAt), W - MARGIN, y + 5, { align: 'right' })
+
+      y += 12
+      doc.setDrawColor(...LINE)
+      doc.line(MARGIN, y - 3, W - MARGIN, y - 3)
+    })
+    y += 3
+  }
+
+  // -- Aptitude by subject ----------------------------------------------------------
+  const aptWithData = aptBySubject.filter(a => a.count > 0)
+  if (aptWithData.length > 0) {
+    ensureSpace(14)
+    sectionTitle('Aptitude Performance')
+    aptWithData.forEach(a => {
+      ensureSpace(7)
+      kv(a.title, `${a.avg}% avg  .  ${a.count} attempt${a.count === 1 ? '' : 's'}`, MARGIN, MARGIN + 60)
+      y += 6.5
+    })
+    y += 3
+  }
+
+  // -- Top assessment scores ---------------------------------------------------------
+  const topScores = Object.entries(s.assessmentScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([conceptId, score]) => {
+      const concept = ALL_CONCEPTS.find(c => c.id === conceptId)
+      return { name: concept ? concept.title : conceptId, score }
+    })
+  if (topScores.length > 0) {
+    ensureSpace(14)
+    sectionTitle('Top Assessment Scores')
+    topScores.forEach(t => {
+      ensureSpace(7)
+      kv(t.name, `${t.score}%`, MARGIN, W - MARGIN - 15)
+      y += 6.5
+    })
+    y += 3
+  }
+
+  // -- Mock test results ------------------------------------------------------------
   if (mockTests.length > 0) {
-    if (y > 240) { doc.addPage(); y = 20 }
-    addSection('Mock Test Results')
+    ensureSpace(14)
+    sectionTitle('Mock Test Results')
     mockTests.forEach(m => {
+      ensureSpace(7)
       const lang = LANGUAGES.find(l => l.id === m.languageId)?.title || m.languageId
-      addKV(`${lang}:`, `${m.score}/${m.totalMarks} -- ${m.passed ? 'PASS' : 'FAIL'} (${fmtDate(m.completedAt)})`)
-      if (y > 270) { doc.addPage(); y = 20 }
+      kv(lang, `${m.score}/${m.totalMarks}  .  ${m.passed ? 'PASS' : 'FAIL'}  .  ${fmtDate(m.completedAt)}`, MARGIN, MARGIN + 45)
+      y += 6.5
+    })
+    y += 3
+  }
+
+  // -- Placement test submissions -----------------------------------------------------
+  if (placements.length > 0) {
+    ensureSpace(14)
+    sectionTitle('Placement Test Submissions')
+    placements.forEach(p => {
+      ensureSpace(7)
+      kv(`Test ${p.testId}`, `${p.score}/${p.totalMarks}  .  ${fmtDate(p.submittedAt)}`, MARGIN, MARGIN + 45)
+      y += 6.5
     })
   }
 
-  if (placements.length > 0) {
-    if (y > 240) { doc.addPage(); y = 20 }
-    addSection('Placement Test Submissions')
-    placements.forEach(p => {
-      addKV(`Test ${p.testId}:`, `${p.score}/${p.totalMarks} (${fmtDate(p.submittedAt)})`)
-      if (y > 270) { doc.addPage(); y = 20 }
-    })
+  // -- Footer on every page -----------------------------------------------------------
+  const pageCount = doc.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setDrawColor(...LINE)
+    doc.line(MARGIN, H - 14, W - MARGIN, H - 14)
+    doc.setFontSize(7.5)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(...MUTED)
+    doc.text('CoderPlay AI . Confidential student performance report', MARGIN, H - 9)
+    doc.text(`Page ${i} of ${pageCount}`, W - MARGIN, H - 9, { align: 'right' })
   }
 
   doc.save(`${s.regNum}_${s.name.replace(/\s+/g, '_')}_report.pdf`)
@@ -494,7 +715,7 @@ function StudentDrawer({
   const handlePDF = async () => {
     setPdfLoading(true)
     try {
-      await downloadPDF(s, mockTests, placements)
+      await downloadPDF(s, effectiveStages, mockTests, placements, finalExams, aptBySubject, weekData)
     } finally {
       setPdfLoading(false)
     }
@@ -697,19 +918,22 @@ function StudentDrawer({
                   {finalExams.map(exam => {
                     const lang = LANGUAGES.find(l => l.id === exam.languageId)
                     const tierColor: Record<string, string> = {
-                      Elite:   'bg-purple-100 text-purple-800 border-purple-300',
                       Diamond: 'bg-cyan-100 text-cyan-800 border-cyan-300',
                       Gold:    'bg-yellow-100 text-yellow-800 border-yellow-300',
                       Silver:  'bg-gray-100 text-gray-700 border-gray-300',
-                      Bronze:  'bg-amber-100 text-amber-800 border-amber-300',
+                      Pass:    'bg-amber-100 text-amber-800 border-amber-300',
                     }
-                    const tc = tierColor[exam.tier] || 'bg-red-100 text-red-700 border-red-300'
+                    // Derived from combinedScore rather than the stored tier/passed fields, so a
+                    // record written under an older threshold scheme can never show a stale badge.
+                    const tier = getCertificateTier(exam.combinedScore ?? 0)
+                    const passed = tier !== 'Failed'
+                    const tc = tierColor[tier] || 'bg-red-100 text-red-700 border-red-300'
                     return (
                       <div key={exam.languageId} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <span className="text-xs font-bold text-gray-800">{lang?.title || exam.languageId}</span>
-                          {exam.tier && exam.tier !== 'Failed' ? (
-                            <span className={`px-2.5 py-0.5 rounded-full border text-xs font-black ${tc}`}>{exam.tier} Tier</span>
+                          {passed ? (
+                            <span className={`px-2.5 py-0.5 rounded-full border text-xs font-black ${tc}`}>{tier} Tier</span>
                           ) : (
                             <span className="px-2.5 py-0.5 rounded-full border border-red-200 bg-red-50 text-xs font-black text-red-700">Failed</span>
                           )}
@@ -723,14 +947,14 @@ function StudentDrawer({
                             <div className="text-sm font-black text-indigo-700">{exam.externalMarks ?? 0}/75</div>
                             <div className="text-xs text-gray-400">External</div>
                           </div>
-                          <div className={`rounded-lg p-2 border ${exam.passed ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                            <div className={`text-sm font-black ${exam.passed ? 'text-green-700' : 'text-red-600'}`}>{exam.combinedScore ?? 0}/100</div>
+                          <div className={`rounded-lg p-2 border ${passed ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                            <div className={`text-sm font-black ${passed ? 'text-green-700' : 'text-red-600'}`}>{exam.combinedScore ?? 0}/100</div>
                             <div className="text-xs text-gray-400">Combined</div>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-400">{fmtDate(exam.submittedAt)}</span>
-                          {exam.passed && (
+                          {passed && (
                             <a
                               href={`/language/${exam.languageId}/certificate`}
                               target="_blank"

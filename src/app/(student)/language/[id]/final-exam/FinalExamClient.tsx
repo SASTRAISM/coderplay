@@ -139,21 +139,19 @@ function diffBg(d: string) {
 }
 
 function computeTier(combined: number): string {
-  if (combined >= 91) return 'Elite'
-  if (combined >= 86) return 'Diamond'
-  if (combined >= 76) return 'Gold'
-  if (combined >= 66) return 'Silver'
-  if (combined >= 55) return 'Bronze'
+  if (combined >= 90) return 'Diamond'
+  if (combined >= 80) return 'Gold'
+  if (combined >= 60) return 'Silver'
+  if (combined >= 40) return 'Pass'
   return 'Failed'
 }
 
 function tierStyle(tier: string): { bg: string; text: string; border: string } {
   switch (tier) {
-    case 'Elite':   return { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300' }
     case 'Diamond': return { bg: 'bg-cyan-100',   text: 'text-cyan-800',   border: 'border-cyan-300' }
     case 'Gold':    return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' }
     case 'Silver':  return { bg: 'bg-gray-100',   text: 'text-gray-700',   border: 'border-gray-300' }
-    case 'Bronze':  return { bg: 'bg-amber-100',  text: 'text-amber-800',  border: 'border-amber-300' }
+    case 'Pass':    return { bg: 'bg-amber-100',  text: 'text-amber-800',  border: 'border-amber-300' }
     default:        return { bg: 'bg-red-100',    text: 'text-red-700',    border: 'border-red-300' }
   }
 }
@@ -278,20 +276,25 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
       if (snap.exists()) {
         const data = snap.data() as FinalExamResult
         setExistingResult(data)
-        if (typeof data.combinedScore === 'number') setResultCombinedScore(data.combinedScore)
+        if (typeof data.combinedScore === 'number') {
+          setResultCombinedScore(data.combinedScore)
+          // Derived from combinedScore rather than the stored tier field, so a record written
+          // under an older threshold scheme can never show a stale tier.
+          setResultTier(computeTier(data.combinedScore))
+        }
         if (typeof data.internalMarks === 'number') setResultInternalMarks(data.internalMarks)
-        if (data.tier) setResultTier(data.tier)
       }
       if (!attSnap.empty) {
         const attempts: PastAttempt[] = attSnap.docs.map((d, idx) => {
           const a = d.data()
+          const combinedScore = a.combinedScore ?? 0
           return {
             attemptNumber: a.attemptNumber ?? (attSnap.size - idx),
-            combinedScore: a.combinedScore ?? 0,
+            combinedScore,
             internalMarks: a.internalMarks ?? 0,
             externalMarks: a.externalMarks ?? 0,
-            tier: a.tier ?? 'Failed',
-            passed: a.passed ?? false,
+            tier: computeTier(combinedScore),
+            passed: combinedScore >= 40,
             grade: a.grade ?? '-',
             submittedAt: a.submittedAt?.toDate?.()?.toLocaleDateString('en-IN') ?? '',
           }
@@ -481,7 +484,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
       const externalScore = data.evaluation.totalScore
       const combinedScore = Math.round((internalMarks + externalScore) * 10) / 10
       const tier = computeTier(combinedScore)
-      const passed = combinedScore >= 55
+      const passed = combinedScore >= 40
 
       const result: FinalExamResult = {
         uid: user.uid,
@@ -636,7 +639,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
     const bestAttempt = pastAttempts.length > 0
       ? pastAttempts.reduce((best, a) => a.combinedScore > best.combinedScore ? a : best, pastAttempts[0])
       : null
-    const hasPassed = pastAttempts.some(a => a.passed) || existingResult?.passed
+    const hasPassed = pastAttempts.some(a => a.passed) || (existingResult?.combinedScore ?? 0) >= 40
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -657,7 +660,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
               <p className="text-xs font-black uppercase tracking-wider text-purple-700">Test Account Mode</p>
               <p className="text-xs text-purple-600">Exam unlocked regardless of completion. Certificate tier previews:</p>
               <div className="flex flex-wrap gap-2 mt-1">
-                {['Bronze', 'Silver', 'Gold', 'Diamond', 'Elite'].map(t => (
+                {['Pass', 'Silver', 'Gold', 'Diamond'].map(t => (
                   <Link key={t} href={`/language/${params.id}/certificate?demo=1&tier=${t}`}
                     className="px-3 py-1 rounded-full border border-purple-300 text-xs font-bold text-purple-700 hover:bg-purple-100 transition-colors">
                     {t} Cert
@@ -738,7 +741,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
               <div className="bg-white rounded-xl p-3 border border-blue-100">
                 <div className="text-xl font-black text-gray-900">100</div>
                 <div className="text-xs text-gray-500 mt-0.5">Total</div>
-                <div className="text-xs text-gray-400 mt-0.5">Pass: 55/100</div>
+                <div className="text-xs text-gray-400 mt-0.5">Pass: 40/100</div>
               </div>
             </div>
           </div>
@@ -746,13 +749,12 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
           {/* Tier ranges */}
           <div className="border border-gray-200 rounded-xl p-4">
             <p className="text-xs font-black text-gray-700 uppercase tracking-wide mb-3">Certificate Tiers</p>
-            <div className="grid grid-cols-5 gap-1.5 text-center">
+            <div className="grid grid-cols-4 gap-1.5 text-center">
               {[
-                { tier: 'Bronze', range: '55-65', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800' },
-                { tier: 'Silver', range: '66-75', bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700' },
-                { tier: 'Gold', range: '76-85', bg: 'bg-yellow-50', border: 'border-yellow-300', text: 'text-yellow-800' },
-                { tier: 'Diamond', range: '86-90', bg: 'bg-cyan-50', border: 'border-cyan-300', text: 'text-cyan-800' },
-                { tier: 'Elite', range: '91+', bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-800' },
+                { tier: 'Pass', range: '40-59', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800' },
+                { tier: 'Silver', range: '60-79', bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700' },
+                { tier: 'Gold', range: '80-89', bg: 'bg-yellow-50', border: 'border-yellow-300', text: 'text-yellow-800' },
+                { tier: 'Diamond', range: '90-100', bg: 'bg-cyan-50', border: 'border-cyan-300', text: 'text-cyan-800' },
               ].map(t => (
                 <div key={t.tier} className={`rounded-xl border p-2 ${t.bg} ${t.border}`}>
                   <div className={`text-xs font-black ${t.text}`}>{t.tier}</div>
@@ -817,7 +819,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
                 {[
                   { label: 'Duration', value: '90 min' },
                   { label: 'Questions', value: '27' },
-                  { label: 'Pass Mark', value: '55/100' },
+                  { label: 'Pass Mark', value: '40/100' },
                 ].map(item => (
                   <div key={item.label} className="bg-white/10 rounded-xl p-4 text-center">
                     <div className="text-xl font-black text-white">{item.value}</div>
@@ -836,7 +838,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
                     'First violation: warning. Second violation: exam auto-submits immediately.',
                     'Copy and paste are disabled for the entire duration.',
                     'Timer is strict -- the exam auto-submits when it reaches 0:00.',
-                    'You need 55/100 combined (internal + external) to pass.',
+                    'You need 40/100 combined (internal + external) to pass.',
                     'Section A: 2 coding problems (25 marks each).',
                     'Section B: 25 MCQ questions (1 mark each).',
                     `Questions cover all ${concepts.length} Python concepts equally.`,
@@ -930,7 +932,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
                 You have answered <strong>{answeredCount}/{totalQ}</strong> questions.
                 {answeredCount < totalQ && <span className="text-orange-600"> {totalQ - answeredCount} unanswered.</span>}
               </p>
-              <p className="text-xs text-gray-400 mb-5">Need 55/100 combined to pass and unlock your certificate.</p>
+              <p className="text-xs text-gray-400 mb-5">Need 40/100 combined to pass and unlock your certificate.</p>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowSubmitModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
                 <button type="button" onClick={handleSubmitExam} className="flex-1 py-2.5 bg-yellow-400 hover:bg-yellow-300 rounded-xl text-sm font-black text-black">Submit</button>
@@ -1144,7 +1146,7 @@ export default function FinalExamClient({ params }: { params: { id: string } }) 
     const combinedScore = resultCombinedScore || Math.round((internalMarks + totalScore) * 10) / 10
     const tier = resultTier || computeTier(combinedScore)
     const ts = tierStyle(tier)
-    const combinedPassed = combinedScore >= 55
+    const combinedPassed = combinedScore >= 40
 
     const handleRetake = () => {
       setPhase('intro')
