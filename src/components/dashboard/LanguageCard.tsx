@@ -75,7 +75,7 @@ export function LanguageCard({
       <div className="mb-4 space-y-1">
         <div className="flex justify-between text-xs text-gray-400">
           <span>{completedConcepts}/{language.totalConcepts} concepts</span>
-          <span>{isStarted ? 'In Progress' : 'Not started'}</span>
+          <span>{isStarted ? `${progressPercent == 100 ? 'Completed' : 'In Progress'}` : 'Not started'}</span>
         </div>
         <ProgressBar value={progressPercent} size="sm" animate={false} />
       </div>

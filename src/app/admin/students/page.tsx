@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase/config'
 import { getBackendUrl } from '@/lib/backendUrl'
 import { CONCEPTS } from '@/data/concepts'
 import { LANGUAGES } from '@/data/languages'
-import { getCertificateTier } from '@/lib/pdf/downloadCertificatePdf'
+import { downloadCertificatePdf, generateCertificateId, getCertificateTier } from '@/lib/pdf/downloadCertificatePdf'
 import { LOGO_BASE64 } from '@/lib/pdf/adminAssets'
 import { APTITUDE_SUBJECTS } from '@/data/aptitudeData'
 import {
@@ -626,6 +626,7 @@ function StudentDrawer({
   const [testTitles, setTestTitles] = useState<Record<string, string>>({})
   const [loadingExtras, setLoadingExtras] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [certificateLoadingLanguage, setCertificateLoadingLanguage] = useState<string | null>(null)
   const [liveProgress, setLiveProgress] = useState<RawProgress | undefined>(undefined)
 
   // Real-time listener for this student's progress document
@@ -718,6 +719,27 @@ function StudentDrawer({
       await downloadPDF(s, effectiveStages, mockTests, placements, finalExams, aptBySubject, weekData)
     } finally {
       setPdfLoading(false)
+    }
+  }
+
+  const handleCertificateDownload = async (exam: FinalExamResult) => {
+    const language = LANGUAGES.find(lang => lang.id === exam.languageId)
+    if (!language || getCertificateTier(exam.combinedScore ?? 0) === 'Failed') return
+
+    setCertificateLoadingLanguage(exam.languageId)
+    try {
+      await downloadCertificatePdf({
+        filename: `${language.title.toLowerCase().replace(/\s+/g, '-')}-${s.regNum}-certificate.pdf`,
+        studentName: s.name,
+        courseTitle: `${language.title} Programming`,
+        registrationNumber: s.regNum === '--' ? '' : s.regNum,
+        certificateId: generateCertificateId(s.uid, exam.languageId),
+        internalScore: exam.internalMarks ?? 0,
+        externalScore: exam.externalMarks ?? 0,
+        overallScore: exam.combinedScore ?? 0,
+      })
+    } finally {
+      setCertificateLoadingLanguage(null)
     }
   }
 
@@ -955,14 +977,14 @@ function StudentDrawer({
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-400">{fmtDate(exam.submittedAt)}</span>
                           {passed && (
-                            <a
-                              href={`/language/${exam.languageId}/certificate`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-bold text-yellow-700 hover:text-yellow-600 underline"
+                            <button
+                              type="button"
+                              onClick={() => handleCertificateDownload(exam)}
+                              disabled={certificateLoadingLanguage === exam.languageId}
+                              className="text-xs font-bold text-yellow-700 hover:text-yellow-600 underline disabled:opacity-50 disabled:no-underline"
                             >
-                              View Certificate
-                            </a>
+                              {certificateLoadingLanguage === exam.languageId ? 'Preparing...' : 'Download Certificate'}
+                            </button>
                           )}
                         </div>
                       </div>

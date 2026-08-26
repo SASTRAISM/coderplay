@@ -26,6 +26,12 @@ export interface CertificatePdfData {
 
 export type CertificateTier = 'Diamond' | 'Gold' | 'Silver' | 'Pass' | 'Failed'
 
+export function generateCertificateId(uid: string, langId: string): string {
+  const base = `${uid}-${langId}`.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const hex = base.toString(16).toUpperCase().padStart(8, '0')
+  return `CPA-${langId.toUpperCase()}-${hex}`
+}
+
 // -----------------------------------------------------------------------------
 // Asset dictionary -- paste production Base64 strings here.
 // -----------------------------------------------------------------------------

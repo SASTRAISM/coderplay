@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { Lock, FlaskConical, CheckCircle2, ShieldCheck, QrCode, Download, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { listenToProgress } from '@/lib/firebase/firestore'
-import { downloadCertificatePdf, getCertificateTier } from '@/lib/pdf/downloadCertificatePdf'
+import { downloadCertificatePdf, generateCertificateId, getCertificateTier } from '@/lib/pdf/downloadCertificatePdf'
 import { getLanguageById } from '@/data/languages'
 import { CONCEPTS } from '@/data/concepts'
 import { Logo } from '@/components/shared/Logo'
@@ -38,12 +38,6 @@ function tierBadgeStyle(tier: string): { bg: string; text: string; border: strin
     case 'Pass':    return { bg: 'bg-amber-50',    text: 'text-amber-700',   border: 'border-amber-200' }
     default:        return { bg: 'bg-gray-100',    text: 'text-gray-600',    border: 'border-gray-200' }
   }
-}
-
-function generateCertId(uid: string, langId: string): string {
-  const base = `${uid}-${langId}`.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const hex = base.toString(16).toUpperCase().padStart(8, '0')
-  return `CPA-${langId.toUpperCase()}-${hex}`
 }
 
 function formatDate(value: string | Date | null | undefined): string {
@@ -90,7 +84,7 @@ export default function CertificatePageClient({ params }: { params: { id: string
   const certId = user
     ? isDemoPreview
       ? `CPA-${params.id.toUpperCase()}-DEMO`
-      : generateCertId(user.uid, params.id)
+      : generateCertificateId(user.uid, params.id)
     : `CPA-${params.id.toUpperCase()}-PREVIEW`
   const langName = language?.title || params.id
   const issuedOnLabel = formatDate(isDemoPreview ? new Date() : completedOn)

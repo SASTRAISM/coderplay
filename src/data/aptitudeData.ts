@@ -22,7 +22,7 @@ export const APTITUDE_SUBJECTS: AptitudeSubject[] = [
   {
     id: 'quantitative',
     title: 'Quantitative Aptitude',
-    icon: '????',
+    icon: 'QA',
     color: '#3B82F6',
     description: 'Master numbers, percentages, ratios, profit-loss, time-distance, averages, and probability -- the backbone of placement tests.',
     topics: ['Percentages', 'Ratios & Proportions', 'Profit & Loss', 'Time, Speed & Distance', 'Averages', 'Simple & Compound Interest', 'Number Systems', 'Probability', 'Permutation & Combination', 'Mixtures & Alligations'],
@@ -38,7 +38,7 @@ export const APTITUDE_SUBJECTS: AptitudeSubject[] = [
   {
     id: 'verbal',
     title: 'Verbal Ability',
-    icon: '????',
+    icon: 'VA',
     color: '#10B981',
     description: 'Boost your English language skills -- vocabulary, grammar, reading comprehension, sentence completion, and verbal reasoning.',
     topics: ['Synonyms & Antonyms', 'Sentence Completion', 'Reading Comprehension', 'Error Spotting', 'Sentence Rearrangement', 'Idioms & Phrases', 'One Word Substitution', 'Cloze Test', 'Active & Passive Voice', 'Direct & Indirect Speech'],
@@ -54,7 +54,7 @@ export const APTITUDE_SUBJECTS: AptitudeSubject[] = [
   {
     id: 'logical',
     title: 'Logical Reasoning',
-    icon: '????',
+    icon: 'LR',
     color: '#8B5CF6',
     description: 'Sharpen your analytical thinking -- series, coding-decoding, blood relations, seating arrangements, syllogisms, and more.',
     topics: ['Number & Letter Series', 'Coding-Decoding', 'Blood Relations', 'Seating Arrangements', 'Syllogisms', 'Direction & Distance', 'Statements & Conclusions', 'Analogy', 'Classification', 'Clocks & Calendars'],
@@ -70,7 +70,7 @@ export const APTITUDE_SUBJECTS: AptitudeSubject[] = [
   {
     id: 'data_interpretation',
     title: 'Data Interpretation',
-    icon: '????',
+    icon: 'DI',
     color: '#F59E0B',
     description: 'Read and interpret tables, bar charts, pie charts, line graphs, and mixed diagrams quickly and accurately.',
     topics: ['Bar Charts', 'Pie Charts', 'Line Graphs', 'Tables', 'Mixed Graphs', 'Caselet DI', 'Data Sufficiency', 'Missing Data'],
@@ -86,7 +86,7 @@ export const APTITUDE_SUBJECTS: AptitudeSubject[] = [
   {
     id: 'technical_aptitude',
     title: 'Technical Aptitude',
-    icon: '????',
+    icon: 'TA',
     color: '#EF4444',
     description: 'Core CS concepts tested in tech placements -- OS, DBMS, networking, data structures, algorithms, and OOP fundamentals.',
     topics: ['Data Structures', 'Algorithms & Complexity', 'DBMS & SQL', 'OS Concepts', 'Networking Basics', 'OOP Concepts', 'Computer Organization', 'Software Engineering'],
