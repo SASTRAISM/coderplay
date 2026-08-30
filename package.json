@@ -26,7 +26,7 @@
     "tunnels": "cloudflared tunnel run --token $(cat ~/.cloudflared/coderplay-token.txt) --url http://127.0.0.1:5175",
     "cloudflare:frontend": "node scripts/cloudflare-frontend.js",
     "dev:mac": "npm run build:mac && concurrently --kill-others-on-fail false -n backend,cloudflare -c yellow,blue \"npm run backend:ensure\" \"npm run cloudflare:mac\"",
-    "postinstall": "npm --prefix backend install"
+        "postinstall": "node -e \"require('fs').existsSync('backend/package.json') && require('child_process').execSync('npm --prefix backend install', { stdio: 'inherit' })\""
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
